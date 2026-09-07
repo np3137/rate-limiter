@@ -1,25 +1,27 @@
 package org.example.algo.rateLimiter;
 
-import org.example.algo.rateLimiter.impl.TokenBucket;
+import org.example.algo.rateLimiter.config.RateLimiterConfig;
+import org.example.algo.rateLimiter.design.factory.RateLimiterFactory;
+import org.example.algo.rateLimiter.enums.RateLimiterType;
 
 import java.util.concurrent.ConcurrentHashMap;
 
 public class RateLimitRegistry
 {
-   private final long capacity;
-   private final long refillRatePerSec;
-   private final ConcurrentHashMap<String, TokenBucket>userIdToBucketMap = new ConcurrentHashMap<>();
+   private final RateLimiterType rateLimiterType;
+   private final RateLimiterConfig rateLimiterConfig;
+   private final ConcurrentHashMap<String, RateLimiter>userIdToBucketMap = new ConcurrentHashMap<>();
 
 
-    public RateLimitRegistry(long capacity, long refillRatePerSec)
+    public RateLimitRegistry(RateLimiterType rateLimiterType, RateLimiterConfig rateLimiterConfig)
     {
-        this.capacity = capacity;
-        this.refillRatePerSec = refillRatePerSec;
+        this.rateLimiterType = rateLimiterType;
+        this.rateLimiterConfig = rateLimiterConfig;
     }
 
     public boolean allowRequest(String userId)
     {
-         TokenBucket tokenBucket = userIdToBucketMap.computeIfAbsent(userId, k-> new TokenBucket(capacity, refillRatePerSec));
-         return tokenBucket.allowRequest();
+         RateLimiter rateLimiter = userIdToBucketMap.computeIfAbsent(userId, k-> RateLimiterFactory.createRateLimiter(rateLimiterType, rateLimiterConfig));
+         return rateLimiter.allowRequest();
     }
 }
